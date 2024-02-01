@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Test Messages</h1>
+    <div class="messages">
+        {% for message in messages %}
+            <p><strong>{{ 'User' if message.is_user else 'AI' }}:</strong> {{ message.content }}</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
