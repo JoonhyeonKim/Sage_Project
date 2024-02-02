@@ -8,6 +8,7 @@ db = SQLAlchemy()
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)  # Add this line
     messages = db.relationship('Message', backref='conversation', lazy=True)
 
 class Message(db.Model):

@@ -1,14 +1,40 @@
 from openai import OpenAI
 from flask import Flask, render_template, request, redirect, url_for, session
+from flask_session import Session
+from redis import Redis
 from models import init_app, db, Conversation, Message
 import json
 from dotenv import load_dotenv
 import os
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import re
+import json
+from markdown2 import markdown
+from markupsafe import Markup
 load_dotenv()
 client = OpenAI()
 
-# from openai import OpenAI
-# import json
+def load_prompts(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            prompts = json.load(file)
+        return prompts
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from {file_path}: {e}")
+        return None
+
+# Assuming the JSON file is located at data/prompts.json relative to your script
+prompts_file_path = 'data/prompt/experts_prompt.json'
+expert_prompts = load_prompts(prompts_file_path)
+
+if expert_prompts is None:
+    print("Failed to load expert prompts.")
+else:
+    print("Expert prompts loaded successfully.")
 
 
 # Example dummy function hard coded to return the same weather
@@ -23,6 +49,10 @@ def get_current_weather(location, unit="fahrenheit"):
         return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
     else:
         return json.dumps({"location": location, "temperature": "unknown"})
+def get_embedding(text):
+    # This function should return the embedding vector for the text
+    # Implementation depends on the embedding model you're using
+    pass
 
 # def run_conversation():
 #     # Step 1: send the conversation and available functions to the model
@@ -91,25 +121,94 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat.db'  # Example for SQLite
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Flask-Session configuration
+app.config['SESSION_TYPE'] = 'redis'  # Specifies the session storage backend
+app.config['SESSION_PERMANENT'] = False  # Sessions are not permanent
+app.config['SESSION_USE_SIGNER'] = True  # Securely sign the session cookie
+app.config['SESSION_KEY_PREFIX'] = 'session:'  # Prefix for session keys
+app.config['SESSION_REDIS'] = Redis(host='localhost', port=6379)  # Configuration for Redis
+
+# Initialize Flask-Session
+Session(app)
+
 init_app(app)
 
 with app.app_context():
     db.create_all()  # Creates database tables
+
+@app.route('/set_name')
+def set_name():
+    session['name'] = 'Alice'
+    return 'Name set in session'
+
+@app.route('/get_name')
+def get_name():
+    name = session.get('name', 'Guest')
+    return f'Hello, {name}'
+
+@app.route('/start_session', methods=['GET', 'POST'])
+def start_session():
+    # Create a new conversation instance
+    new_conversation = Conversation()
+    
+    # Add the new conversation to the database
+    db.session.add(new_conversation)
+    db.session.commit()
+
+    # Store the conversation ID in the session
+    session['conversation_id'] = new_conversation.id
+
+    # Redirect to the home page to start interacting
+    return redirect(url_for('home'))
+
+@app.route('/end_session', methods=['GET'])
+def end_session():
+    # Remove the conversation ID from the session
+    if 'conversation_id' in session:
+        session.pop('conversation_id', None)
+
+    # Redirect to the home page
+    return redirect(url_for('home'))
+
+@app.route('/past_conversations')
+def past_conversations():
+    # Fetch all past conversations, ordered by timestamp
+    all_conversations = Conversation.query.order_by(Conversation.timestamp.desc()).all()
+    return render_template('past_conversations.html', conversations=all_conversations)
+
+@app.route('/view_conversation/<int:conversation_id>')
+def view_conversation(conversation_id):
+    # Fetch the specific conversation
+    conversation = Conversation.query.get_or_404(conversation_id)
+    return render_template('view_conversation.html', conversation=conversation)
+@app.route('/test_safe')
+def test_safe():
+    test_html = "<p>This should be <strong>bold</strong>.</p>"
+    return render_template('test_template.html', test_html=test_html)
+
 @app.route('/')
 def home():
     conversation_id = session.get('conversation_id')
     if conversation_id:
         conversation = Conversation.query.get(conversation_id)
         messages = conversation.messages if conversation else []
+        in_session = True
     else:
         messages = []
-    return render_template('index.html', messages=messages)
+        in_session = False
+    # Pass the 'in_session' flag to the template
+    return render_template('index.html', messages=messages, in_session=in_session)
 
 @app.route('/interact', methods=['POST'])
 def interact():
     user_input = request.form['user_input']
     
     user_input = str(user_input)
+
+    most_similar_prompt = get_most_similar_prompt(user_input, expert_prompts)
+    # Extract the content from the most similar prompt
+    most_similar_prompt_content = most_similar_prompt["content"]
 
     # Retrieve or create a conversation
     conversation_id = session.get('conversation_id')
@@ -130,32 +229,46 @@ def interact():
     summarized_history = summarize_chat_history(chat_history)
 
     # Get AI response
-    ai_response = get_ai_response(summarized_history, user_input)
+    ai_response = get_ai_response(summarized_history, user_input, most_similar_prompt_content)
+
+    print("AI Response:", ai_response)  # Check the response format
+    ai_response = format_ai_response(ai_response)  # Format for display
+
+    # ai_response = markdown(ai_response)
+    # safe_html_response = Markup(html_response)
 
     # Save the user input and AI response
     save_message(user_input, conversation_id, is_user=True)
     save_message(ai_response, conversation_id, is_user=False)
 
     return redirect(url_for('home'))
+
+
+def get_embedding(text, model="text-embedding-3-small"):
+   text = text.replace("\n", " ")
+   return client.embeddings.create(input = [text], model=model).data[0].embedding
+
+def get_most_similar_prompt(user_input, expert_prompts, model="text-embedding-ada-002"):
+    # Get embeddings for the expert prompts
+    prompt_texts = [prompt['content'] for prompt in expert_prompts]
+    prompt_embeddings_response = client.embeddings.create(input=prompt_texts, model=model)
+    prompt_embeddings = np.array([embedding.embedding for embedding in prompt_embeddings_response.data])
     
-    user_message = Message(content=user_input, conversation_id=conversation_id, is_user=True)
-    db.session.add(user_message)
+    # Get embedding for the user input
+    user_input_embedding_response = client.embeddings.create(input=[user_input], model=model)
+    user_input_embedding = np.array([embedding.embedding for embedding in user_input_embedding_response.data])
+    
+    # Reshape embeddings for cosine similarity calculation
+    user_input_embedding = user_input_embedding.reshape(1, -1)
+    
+    # Calculate cosine similarity
+    similarities = cosine_similarity(user_input_embedding, prompt_embeddings)[0]
 
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo", 
-        messages=[
-            {"role": "system", "content": """As a theoretical physicist whose expertise rivals that of Leonard Susskind, I am seeking your profound insights into the universe's deepest mysteries, with a focus suitable for someone with a master's level understanding. My interests span quantum mechanics, string theory, black hole thermodynamics, and the multiverse theory. Please elucidate these complex subjects, emphasizing their mathematical formulations, theoretical foundations, and their implications for our understanding of the universe. I expect the explanations to be in-depth, leveraging my master's level background, without delving into the philosophical implications. Your response should be rich in technical detail, showcasing current theories, recent developments, and critical evaluations of these concepts. The aim is to deepen my understanding, inspire further learning, and provide clarity and precision in your explanations."""},
-            {"role": "user", "content": str(user_input)},
+    # Find the index of the highest similarity score
+    most_similar_index = np.argmax(similarities)
 
-        ],
-       )
-    print(response)
-
-    ai_response = response.choices[0].message.content.strip()
-    ai_message = Message(content=ai_response, conversation_id=conversation.id)
-    db.session.add(ai_message)
-    db.session.commit()
-    return redirect(url_for('home'))
+    # Return the most similar expert prompt
+    return expert_prompts[most_similar_index]
 def get_chat_history(conversation_id):
     """
     Retrieve and format the chat history for a given conversation ID.
@@ -200,24 +313,6 @@ def summarize_chat_history(chat_history):
     
     return summarized_history
 
-def create_model_input(chat_history, user_input):
-    # Prepare the system message
-    system_message = {
-        "role": "system", 
-        "content": """As a theoretical physicist whose expertise rivals that of Leonard Susskind, I am seeking your profound insights into the universe's deepest mysteries, with a focus suitable for someone with a master's level understanding. My interests span quantum mechanics, string theory, black hole thermodynamics, and the multiverse theory. Please elucidate these complex subjects, emphasizing their mathematical formulations, theoretical foundations, and their implications for our understanding of the universe. I expect the explanations to be in-depth, leveraging my master's level background, without delving into the philosophical implications. Your response should be rich in technical detail, showcasing current theories, recent developments, and critical evaluations of these concepts. The aim is to deepen my understanding, inspire further learning, and provide clarity and precision in your explanations."""
-    }
-
-    # Format the chat history into a series of messages
-    formatted_history = [{"role": "user" if msg.is_user else "assistant", "content": msg.content} for msg in chat_history]
-
-    # Append the current user input
-    current_input = {"role": "user", "content": user_input}
-
-    # Combine all elements to create the model input
-    model_input = [system_message] + formatted_history + [current_input]
-
-    return model_input
-
 def save_message(content, conversation_id, is_user):
     # Save the message to the database
     message = Message(content=content, conversation_id=conversation_id, is_user=is_user)
@@ -230,7 +325,7 @@ def format_chat_history(chat_history):
         formatted_history += f"{role_prefix}: {message['content']}\n"
     return formatted_history
 
-def get_ai_response(chat_history, user_input):
+def get_ai_response(chat_history, user_input, most_similar_prompt_content):
     """
     Send the system message, chat history, and current user input to OpenAI and get the AI response.
 
@@ -248,7 +343,7 @@ def get_ai_response(chat_history, user_input):
     system_message = {
         "role": "system",
         # "content": "As a theoretical physicist whose expertise rivals that of Leonard Susskind, I am seeking your profound insights into the universe's deepest mysteries, with a focus suitable for someone with a master's level understanding. My interests span quantum mechanics, string theory, black hole thermodynamics, and the multiverse theory. Please elucidate these complex subjects, emphasizing their mathematical formulations, theoretical foundations, and their implications for our understanding of the universe. I expect the explanations to be in-depth, leveraging my master's level background, without delving into the philosophical implications. Your response should be rich in technical detail, showcasing current theories, recent developments, and critical evaluations of these concepts. The aim is to deepen my understanding, inspire further learning, and provide clarity and precision in your explanations."
-        "content": "You are a helpful assistance." + system_postfix + formatted_history
+        "content": most_similar_prompt_content + system_postfix + formatted_history
     }
 
     # Include the system message at the beginning of the chat history
@@ -264,5 +359,18 @@ def get_ai_response(chat_history, user_input):
     ai_response = response.choices[0].message.content.strip()
     return ai_response
 
+# def format_ai_response(response):
+#     # Regular expression to find code blocks
+#     code_block_pattern = r"```python(.*?)```"
+#     # Replace code blocks with HTML pre and code tags
+#     formatted_response = re.sub(code_block_pattern, r"<pre><code>\1</code></pre>", response, flags=re.DOTALL)
+#     return formatted_response
+def format_ai_response(response):
+    # Replace newline characters with HTML line breaks for better readability
+    formatted_response = response.replace("\n", "<br>")
+
+    # Additional formatting can be added here if needed
+
+    return formatted_response
 if __name__ == '__main__':
     app.run(debug=True)

@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 .DS_Store  # For macOS users
 instance/chat.db
+data/
+
