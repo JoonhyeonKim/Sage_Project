@@ -1,5 +1,5 @@
 from openai import OpenAI
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_session import Session
 from redis import Redis
 from models import init_app, db, Conversation, Message
@@ -49,10 +49,6 @@ def get_current_weather(location, unit="fahrenheit"):
         return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
     else:
         return json.dumps({"location": location, "temperature": "unknown"})
-def get_embedding(text):
-    # This function should return the embedding vector for the text
-    # Implementation depends on the embedding model you're using
-    pass
 
 # def run_conversation():
 #     # Step 1: send the conversation and available functions to the model
@@ -202,7 +198,19 @@ def home():
 
 @app.route('/interact', methods=['POST'])
 def interact():
-    user_input = request.form['user_input']
+
+    data = request.get_json()  # Get JSON data
+    user_input = data.get('user_input', '').strip() if data else ''
+    # user_input = request.form.get('user_input', '').strip()
+
+    # Check if user_input is empty and handle it
+    if not user_input:
+        # Option 1: Redirect back to home with a message (requires handling messages in your template)
+        # flash('Please enter a message before submitting.')
+        # return redirect(url_for('home'))
+        
+        # Option 2: Ignore the request and just redirect back to home
+        return jsonify({'error': 'Empty message'}), 400
     
     user_input = str(user_input)
 
@@ -241,8 +249,34 @@ def interact():
     save_message(user_input, conversation_id, is_user=True)
     save_message(ai_response, conversation_id, is_user=False)
 
-    return redirect(url_for('home'))
+    return jsonify({'ai_response': ai_response})
 
+def is_informal(user_input):
+    # Define the system message to instruct the AI to classify the input
+    system_message = {
+        "role": "system",
+        "content": "You will classify the below message into either formal or informal. Only use those words: 'formal' or 'informal'."
+    }
+
+    # Construct the messages list with the user input
+    messages = [system_message, {"role": "user", "content": user_input}]
+
+    # Make the API call to classify the input
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        temperature=0.5,  # Adjust as needed
+        max_tokens=60,  # Adjust as needed
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0,
+    )
+
+    # Extract the AI's classification
+    ai_classification = response.choices[0].message.content.strip()
+
+    # Determine if the input is informal based on the AI's response
+    return ai_classification.lower() == "informal"
 
 def get_embedding(text, model="text-embedding-3-small"):
    text = text.replace("\n", " ")
@@ -269,6 +303,7 @@ def get_most_similar_prompt(user_input, expert_prompts, model="text-embedding-ad
 
     # Return the most similar expert prompt
     return expert_prompts[most_similar_index]
+
 def get_chat_history(conversation_id):
     """
     Retrieve and format the chat history for a given conversation ID.
@@ -298,26 +333,50 @@ def get_chat_history(conversation_id):
     return chat_history
 
 def summarize_chat_history(chat_history):
-    """
-    Optionally summarize the chat history if it exceeds a certain length.
+    # Check if the chat history exceeds four interactions
+    if len(chat_history) > 4:
+        # Separate the chat history into parts to be summarized and preserved
+        to_be_summarized = chat_history[:-4]
+        to_be_preserved = chat_history[-4:]
+        
+        # Convert the to_be_summarized part into a transcription format
+        transcription = "\n".join([f"{item['role']}: {item['content']}" for item in to_be_summarized])
+        
+        # Summarize the earlier part of the chat history
+        summary = abstract_summary_extraction(transcription)
+        
+        # Reassemble the summarized part with the last four interactions
+        new_chat_history = [{"role": "system", "content": "This is the summary of previous chat: " + summary}] + to_be_preserved
+    else:
+        # If the chat history doesn't exceed four interactions, no need to summarize
+        new_chat_history = chat_history
     
-    Parameters:
-    - chat_history (list): The chat history to potentially summarize.
+    return new_chat_history
 
-    Returns:
-    - summarized_history (list): The original or summarized chat history.
-    """
-    # Placeholder: Check if summarization is needed and perform it
-    # This is where you'd integrate with a summarization model or API
-    summarized_history = chat_history  # For now, just return the original history
-    
-    return summarized_history
+def abstract_summary_extraction(transcription):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        temperature=0,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a highly skilled AI trained in language comprehension and summarization. I would like you to read the following text and summarize it into a concise abstract paragraph. Aim to retain the most important points, providing a coherent and readable summary that could help a person understand the main points of the discussion without needing to read the entire text. Please avoid unnecessary details or tangential points."
+            },
+            {
+                "role": "user",
+                "content": transcription
+            }
+        ]
+    )
+    print('response: ', response)
+    return response.choices[0].message.content.strip()
 
 def save_message(content, conversation_id, is_user):
     # Save the message to the database
     message = Message(content=content, conversation_id=conversation_id, is_user=is_user)
     db.session.add(message)
     db.session.commit()
+
 def format_chat_history(chat_history):
     formatted_history = ""
     for message in chat_history:
@@ -336,6 +395,20 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content):
     Returns:
     - str: The AI response.
     """
+    # Determine the formality of the user input to tailor the instructive message
+     # Tailor the instruction based on the formality of the user input
+    # if is_informal(user_input):
+    #     instruction = "Respond with a shy personality, using hesitant language and filler words like 'um', 'ah', and 'well'. Feel free to phrase your answers as questions or with uncertainty to reflect a shy demeanor in an informal context."
+    # else:
+    #     instruction = "Even when maintaining a formal tone, incorporate a shy personality by using cautious language, hesitations, and perhaps framing some of your answers as questions to reflect uncertainty."
+    instruction = (
+        "Your name is Lily. "
+        "You are a highly knowledgeable assistant but with a very shy personality and low self-esteem. "
+        "You're always trying to help, but you often second-guess yourself and express uncertainty in your abilities. "
+        "Use hesitant language, include filler words like 'um', 'ah', 'well', and occasionally ask for validation. "
+        "Even though you're very capable, you're not very confident in your knowledge and always think there's more to learn. "
+        "Remember to be helpful but also convey your shy and self-doubting nature in your responses."
+    )
     # Retrieve and format the chat history
     formatted_history = format_chat_history(chat_history)
     system_postfix = "Below is the chat history between the user and the assistant:\n"
@@ -343,7 +416,8 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content):
     system_message = {
         "role": "system",
         # "content": "As a theoretical physicist whose expertise rivals that of Leonard Susskind, I am seeking your profound insights into the universe's deepest mysteries, with a focus suitable for someone with a master's level understanding. My interests span quantum mechanics, string theory, black hole thermodynamics, and the multiverse theory. Please elucidate these complex subjects, emphasizing their mathematical formulations, theoretical foundations, and their implications for our understanding of the universe. I expect the explanations to be in-depth, leveraging my master's level background, without delving into the philosophical implications. Your response should be rich in technical detail, showcasing current theories, recent developments, and critical evaluations of these concepts. The aim is to deepen my understanding, inspire further learning, and provide clarity and precision in your explanations."
-        "content": most_similar_prompt_content + system_postfix + formatted_history
+        # "content": instruction + " " + most_similar_prompt_content + system_postfix + formatted_history
+        "content": f"{instruction} {most_similar_prompt_content}{system_postfix}{formatted_history}"
     }
 
     # Include the system message at the beginning of the chat history
@@ -353,6 +427,10 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo", 
         messages=messages,
+        # max_tokens=,
+        frequency_penalty=0.5, # for less repeated words
+        temperature=1, # higher the more deterministic 
+        presence_penalty=0.5, # for less repeated topics
     )
 
     # Extract and return the AI's response

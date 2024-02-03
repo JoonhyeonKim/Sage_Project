@@ -30,7 +30,7 @@
     <h1>Conversation from {{ conversation.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</h1>
     <div class="chat-history">
         {% for message in conversation.messages %}
-            <p><strong>{{ 'User' if message.is_user else 'AI' }}:</strong> {{ message.content }}</p>
+            <p><strong>{{ 'User' if message.is_user else 'AI' }}:</strong> {{ message.content | safe }}</p>
         {% endfor %}
     </div>
 </body>
