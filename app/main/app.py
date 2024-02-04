@@ -2,9 +2,9 @@ from openai import OpenAI
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_session import Session
 from redis import Redis
-from models import init_app, db, Conversation, Message
+from ..models.models import init_app, db, Conversation, Message
 import json
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import os
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -12,9 +12,10 @@ import re
 import json
 from markdown2 import markdown
 from markupsafe import Markup
-load_dotenv()
+
 client = OpenAI()
 
+print(os.path.curdir)
 def load_prompts(file_path):
     try:
         with open(file_path, 'r') as file:
@@ -28,7 +29,7 @@ def load_prompts(file_path):
         return None
 
 # Assuming the JSON file is located at data/prompts.json relative to your script
-prompts_file_path = 'data/prompt/experts_prompt.json'
+prompts_file_path = './data/prompt/experts_prompt.json'
 expert_prompts = load_prompts(prompts_file_path)
 
 if expert_prompts is None:
@@ -112,144 +113,6 @@ def get_current_weather(location, unit="fahrenheit"):
 #         )  # get a new response from the model where it can see the function response
 #         return second_response
 # print(run_conversation())
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat.db'  # Example for SQLite
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Flask-Session configuration
-app.config['SESSION_TYPE'] = 'redis'  # Specifies the session storage backend
-app.config['SESSION_PERMANENT'] = False  # Sessions are not permanent
-app.config['SESSION_USE_SIGNER'] = True  # Securely sign the session cookie
-app.config['SESSION_KEY_PREFIX'] = 'session:'  # Prefix for session keys
-app.config['SESSION_REDIS'] = Redis(host='localhost', port=6379)  # Configuration for Redis
-
-# Initialize Flask-Session
-Session(app)
-
-init_app(app)
-
-with app.app_context():
-    db.create_all()  # Creates database tables
-
-@app.route('/set_name')
-def set_name():
-    session['name'] = 'Alice'
-    return 'Name set in session'
-
-@app.route('/get_name')
-def get_name():
-    name = session.get('name', 'Guest')
-    return f'Hello, {name}'
-
-@app.route('/start_session', methods=['GET', 'POST'])
-def start_session():
-    # Create a new conversation instance
-    new_conversation = Conversation()
-    
-    # Add the new conversation to the database
-    db.session.add(new_conversation)
-    db.session.commit()
-
-    # Store the conversation ID in the session
-    session['conversation_id'] = new_conversation.id
-
-    # Redirect to the home page to start interacting
-    return redirect(url_for('home'))
-
-@app.route('/end_session', methods=['GET'])
-def end_session():
-    # Remove the conversation ID from the session
-    if 'conversation_id' in session:
-        session.pop('conversation_id', None)
-
-    # Redirect to the home page
-    return redirect(url_for('home'))
-
-@app.route('/past_conversations')
-def past_conversations():
-    # Fetch all past conversations, ordered by timestamp
-    all_conversations = Conversation.query.order_by(Conversation.timestamp.desc()).all()
-    return render_template('past_conversations.html', conversations=all_conversations)
-
-@app.route('/view_conversation/<int:conversation_id>')
-def view_conversation(conversation_id):
-    # Fetch the specific conversation
-    conversation = Conversation.query.get_or_404(conversation_id)
-    return render_template('view_conversation.html', conversation=conversation)
-@app.route('/test_safe')
-def test_safe():
-    test_html = "<p>This should be <strong>bold</strong>.</p>"
-    return render_template('test_template.html', test_html=test_html)
-
-@app.route('/')
-def home():
-    conversation_id = session.get('conversation_id')
-    if conversation_id:
-        conversation = Conversation.query.get(conversation_id)
-        messages = conversation.messages if conversation else []
-        in_session = True
-    else:
-        messages = []
-        in_session = False
-    # Pass the 'in_session' flag to the template
-    return render_template('index.html', messages=messages, in_session=in_session)
-
-@app.route('/interact', methods=['POST'])
-def interact():
-
-    data = request.get_json()  # Get JSON data
-    user_input = data.get('user_input', '').strip() if data else ''
-    # user_input = request.form.get('user_input', '').strip()
-
-    # Check if user_input is empty and handle it
-    if not user_input:
-        # Option 1: Redirect back to home with a message (requires handling messages in your template)
-        # flash('Please enter a message before submitting.')
-        # return redirect(url_for('home'))
-        
-        # Option 2: Ignore the request and just redirect back to home
-        return jsonify({'error': 'Empty message'}), 400
-    
-    user_input = str(user_input)
-
-    most_similar_prompt = get_most_similar_prompt(user_input, expert_prompts)
-    # Extract the content from the most similar prompt
-    most_similar_prompt_content = most_similar_prompt["content"]
-
-    # Retrieve or create a conversation
-    conversation_id = session.get('conversation_id')
-    if conversation_id:
-        conversation = Conversation.query.get(conversation_id)
-    else:
-        conversation = Conversation()
-        db.session.add(conversation)
-        db.session.commit()
-        conversation_id = conversation.id
-        session['conversation_id'] = conversation_id  # Store new conversation ID in session
-    
-    
-    # Retrieve and format the chat history
-    chat_history = get_chat_history(conversation_id)
-    
-    # Summarize the chat history if it's too long
-    summarized_history = summarize_chat_history(chat_history)
-
-    # Get AI response
-    ai_response = get_ai_response(summarized_history, user_input, most_similar_prompt_content)
-
-    print("AI Response:", ai_response)  # Check the response format
-    ai_response = format_ai_response(ai_response)  # Format for display
-
-    # ai_response = markdown(ai_response)
-    # safe_html_response = Markup(html_response)
-
-    # Save the user input and AI response
-    save_message(user_input, conversation_id, is_user=True)
-    save_message(ai_response, conversation_id, is_user=False)
-
-    return jsonify({'ai_response': ai_response})
 
 def is_informal(user_input):
     # Define the system message to instruct the AI to classify the input
@@ -450,5 +313,3 @@ def format_ai_response(response):
     # Additional formatting can be added here if needed
 
     return formatted_response
-if __name__ == '__main__':
-    app.run(debug=True)

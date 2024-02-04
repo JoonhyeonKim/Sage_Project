@@ -1,0 +1,145 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #f0f2f5; /* Light grey background */
+    color: #333; /* Dark grey text for readability */
+
+}
+h1 {
+    font-family: 'Montserrat', sans-serif;
+    color: #007bff; /* Use primary color from your palette */
+    margin-bottom: 1rem;
+}
+.chat-container {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+.profile-image {
+    width: 50px; /* Adjust size as needed */
+    height: 50px; /* Adjust size as needed */
+    border-radius: 50%; /* Makes the image round */
+    margin-right: 10px;
+}
+/* New style for aligning the user's messages to the right */
+.user-container {
+    justify-content: flex-end;
+}
+.user-container .profile-image {
+    margin-left: 10px;
+    margin-right: 0; /* Reverse margin for the user */
+}
+/* Adjustments for the message bubble */
+.response, .user-input {
+    flex-grow: 1;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f4f4f4;
+}
+.ai-profile {
+    width: 50px; /* Adjust size as needed */
+    height: 50px; /* Adjust size as needed */
+    border-radius: 50%; /* Makes the image round */
+    margin-right: 10px;
+}
+.response, .user-input {
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f4f4f4;
+}
+.button-group {
+    display: flex;
+    justify-content: center; /* Center align the buttons */
+    gap: 10px; /* Add some space between buttons */
+    margin-top: 20px; /* Margin on top for spacing */
+}
+pre, code {
+    background-color: #3f91a0;
+    color: #ffffff;
+    border: 1px solid #ddd;
+    padding: 5px;
+    font-family: monospace;
+}
+pre {
+    overflow-x: auto;
+}
+input[type="text"] {
+    width: calc(100% - 140px);
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+input[type="submit"] {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #5cb85c;
+    color: white;
+    cursor: pointer;
+}
+input[type="submit"]:hover {
+    background-color: #4cae4c;
+}
+.input-text {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+/* Dark mode styles */
+body.dark-mode {
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+}
+
+body.dark-mode .response, body.dark-mode .user-input {
+    background-color: #333333; /* Darker elements */
+    color: #ffffff;
+}
+
+body.dark-mode pre, body.dark-mode code {
+    background-color: #0d0d0d; /* Dark background for code blocks */
+}
+.relative-container {
+    position: relative;
+    /* Other styling as needed */
+}
+
+#toggle-container {
+    position: fixed;
+    top: 0px;
+    right: 20px; /* Adjust this value based on the container's size and desired button position */
+    z-index: 1000;
+}
+
+/* Style for the toggle button for better visibility */
+#dark-mode-toggle {
+    padding: 10px 20px;
+    font-size: 16px; /* Adjust size as needed */
+    color: white; /* Text color */
+    border: none; /* Remove default border */
+    border-radius: 25px; /* Rounded corners */
+    background-image: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); /* Gradient background */
+    cursor: pointer;
+    outline: none; /* Remove focus border */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow */
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+#dark-mode-toggle:hover, #dark-mode-toggle:focus {
+    background-image: linear-gradient(to right, #2575fc 0%, #6a11cb 100%); /* Invert gradient on hover/focus */
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15); /* Slightly larger shadow on hover/focus */
+}
+
+/* Optional: Change button text color on dark mode for better contrast */
+body.dark-mode #dark-mode-toggle {
+    color: #fff; /* Adjust as needed */
+    background-image: linear-gradient(to right, #555 0%, #aaa 100%);
+}

@@ -3,6 +3,8 @@ env/
 __pycache__/
 *.pyc
 .DS_Store  # For macOS users
-instance/chat.db
+instance/
+*.db
 data/
-
+logs/  # If you have logging files you want to ignore
+migrations/  # If you're using Flask-Migrate or Alembic for database migrations
