@@ -3,13 +3,15 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from flask_session import Session
 from redis import Redis
 from ..models.models import init_app, db, Conversation, Message
+import subprocess
+import base64
 import json
 # from dotenv import load_dotenv
 import os
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import re
-import json
+from PIL import Image
 from markdown2 import markdown
 from markupsafe import Markup
 
@@ -37,82 +39,42 @@ if expert_prompts is None:
 else:
     print("Expert prompts loaded successfully.")
 
-
-# Example dummy function hard coded to return the same weather
-# In production, this could be your backend API or an external API
-def get_current_weather(location, unit="fahrenheit"):
-    """Get the current weather in a given location"""
-    if "tokyo" in location.lower():
-        return json.dumps({"location": "Tokyo", "temperature": "10", "unit": unit})
-    elif "san francisco" in location.lower():
-        return json.dumps({"location": "San Francisco", "temperature": "72", "unit": unit})
-    elif "paris" in location.lower():
-        return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
+def extract_metadata_with_exiftool(image_path):
+    result = subprocess.run(['exiftool', '-json', image_path], stdout=subprocess.PIPE, text=True)
+    metadata = json.loads(result.stdout)
+    if metadata:
+        image_metadata = metadata[0]
+        if 'Chara' in image_metadata:
+            return image_metadata['Chara']
+        else:
+            print("Chara metadata not found.")
     else:
-        return json.dumps({"location": location, "temperature": "unknown"})
+        print("Failed to extract metadata.")
+    return None
 
-# def run_conversation():
-#     # Step 1: send the conversation and available functions to the model
-#     messages = [{"role": "user", "content": "What's the weather like in San Francisco, Tokyo, and Paris?"}]
-#     tools = [
-#         {
-#             "type": "function",
-#             "function": {
-#                 "name": "get_current_weather",
-#                 "description": "Get the current weather in a given location",
-#                 "parameters": {
-#                     "type": "object",
-#                     "properties": {
-#                         "location": {
-#                             "type": "string",
-#                             "description": "The city and state, e.g. San Francisco, CA",
-#                         },
-#                         "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
-#                     },
-#                     "required": ["location"],
-#                 },
-#             },
-#         }
-#     ]
-#     response = client.chat.completions.create(
-#         model="gpt-3.5-turbo-1106",
-#         messages=messages,
-#         tools=tools,
-#         tool_choice="auto",  # auto is default, but we'll be explicit
-#     )
-#     response_message = response.choices[0].message
-#     tool_calls = response_message.tool_calls
-#     # Step 2: check if the model wanted to call a function
-#     if tool_calls:
-#         # Step 3: call the function
-#         # Note: the JSON response may not always be valid; be sure to handle errors
-#         available_functions = {
-#             "get_current_weather": get_current_weather,
-#         }  # only one function in this example, but you can have multiple
-#         messages.append(response_message)  # extend conversation with assistant's reply
-#         # Step 4: send the info for each function call and function response to the model
-#         for tool_call in tool_calls:
-#             function_name = tool_call.function.name
-#             function_to_call = available_functions[function_name]
-#             function_args = json.loads(tool_call.function.arguments)
-#             function_response = function_to_call(
-#                 location=function_args.get("location"),
-#                 unit=function_args.get("unit"),
-#             )
-#             messages.append(
-#                 {
-#                     "tool_call_id": tool_call.id,
-#                     "role": "tool",
-#                     "name": function_name,
-#                     "content": function_response,
-#                 }
-#             )  # extend conversation with function response
-#         second_response = client.chat.completions.create(
-#             model="gpt-3.5-turbo-1106",
-#             messages=messages,
-#         )  # get a new response from the model where it can see the function response
-#         return second_response
-# print(run_conversation())
+# Assuming character_card is a dictionary representation of your character card JSON
+def parse_character_card(character_card=None):
+    if character_card:
+        print('character card: ', character_card)
+        decoded_data = base64.b64decode(character_card)
+        character_traits = json.loads(decoded_data.decode('utf-8'))
+        personality = character_traits.get("data", "")
+        personality = personality['description']
+        instruction = f"Respond as a character with the following personality traits: {personality}."
+        # print('instruction: ', instruction)
+        return instruction
+    else:
+        # Default instruction if no character card is provided
+        instruction = (
+            "Your name is Lily. "
+            "You are a highly knowledgeable assistant but with a very shy personality and low self-esteem. "
+            "You're always trying to help, but you often second-guess yourself and express uncertainty in your abilities. "
+            "Use hesitant language, include filler words like 'um', 'ah', 'well', and occasionally ask for validation. "
+            "Even though you're very capable, you're not very confident in your knowledge and always think there's more to learn. "
+            "Remember to be helpful but also convey your shy and self-doubting nature in your responses."
+        )
+    return instruction
+
 
 def is_informal(user_input):
     # Define the system message to instruct the AI to classify the input
@@ -247,7 +209,7 @@ def format_chat_history(chat_history):
         formatted_history += f"{role_prefix}: {message['content']}\n"
     return formatted_history
 
-def get_ai_response(chat_history, user_input, most_similar_prompt_content):
+def get_ai_response(chat_history, user_input, most_similar_prompt_content, instruction):
     """
     Send the system message, chat history, and current user input to OpenAI and get the AI response.
 
@@ -258,28 +220,18 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content):
     Returns:
     - str: The AI response.
     """
-    # Determine the formality of the user input to tailor the instructive message
-     # Tailor the instruction based on the formality of the user input
-    # if is_informal(user_input):
-    #     instruction = "Respond with a shy personality, using hesitant language and filler words like 'um', 'ah', and 'well'. Feel free to phrase your answers as questions or with uncertainty to reflect a shy demeanor in an informal context."
-    # else:
-    #     instruction = "Even when maintaining a formal tone, incorporate a shy personality by using cautious language, hesitations, and perhaps framing some of your answers as questions to reflect uncertainty."
-    instruction = (
-        "Your name is Lily. "
-        "You are a highly knowledgeable assistant but with a very shy personality and low self-esteem. "
-        "You're always trying to help, but you often second-guess yourself and express uncertainty in your abilities. "
-        "Use hesitant language, include filler words like 'um', 'ah', 'well', and occasionally ask for validation. "
-        "Even though you're very capable, you're not very confident in your knowledge and always think there's more to learn. "
-        "Remember to be helpful but also convey your shy and self-doubting nature in your responses."
-    )
+
+    # image_path = '../../Downloads/2b56ced8073a1b83c5fc1e638db8bbd3699152cf0c70c582ac10430d35a21180.png'
+    # image_path = '../../Downloads/40aa5a2dca92a1af160c918e24f91d8ef2dea8d2f49479a635020c5518540f3a.png'
+    # chara_data_encoded = extract_metadata_with_exiftool(image_path)
+    # instruction = parse_character_card(chara_data_encoded)
+    
     # Retrieve and format the chat history
     formatted_history = format_chat_history(chat_history)
     system_postfix = "Below is the chat history between the user and the assistant:\n"
     # Define the system message
     system_message = {
         "role": "system",
-        # "content": "As a theoretical physicist whose expertise rivals that of Leonard Susskind, I am seeking your profound insights into the universe's deepest mysteries, with a focus suitable for someone with a master's level understanding. My interests span quantum mechanics, string theory, black hole thermodynamics, and the multiverse theory. Please elucidate these complex subjects, emphasizing their mathematical formulations, theoretical foundations, and their implications for our understanding of the universe. I expect the explanations to be in-depth, leveraging my master's level background, without delving into the philosophical implications. Your response should be rich in technical detail, showcasing current theories, recent developments, and critical evaluations of these concepts. The aim is to deepen my understanding, inspire further learning, and provide clarity and precision in your explanations."
-        # "content": instruction + " " + most_similar_prompt_content + system_postfix + formatted_history
         "content": f"{instruction} {most_similar_prompt_content}{system_postfix}{formatted_history}"
     }
 
@@ -313,3 +265,77 @@ def format_ai_response(response):
     # Additional formatting can be added here if needed
 
     return formatted_response
+# In production, this could be your backend API or an external API
+def get_current_weather(location, unit="fahrenheit"):
+    """Get the current weather in a given location"""
+    if "tokyo" in location.lower():
+        return json.dumps({"location": "Tokyo", "temperature": "10", "unit": unit})
+    elif "san francisco" in location.lower():
+        return json.dumps({"location": "San Francisco", "temperature": "72", "unit": unit})
+    elif "paris" in location.lower():
+        return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
+    else:
+        return json.dumps({"location": location, "temperature": "unknown"})
+
+# def run_conversation():
+#     # Step 1: send the conversation and available functions to the model
+#     messages = [{"role": "user", "content": "What's the weather like in San Francisco, Tokyo, and Paris?"}]
+#     tools = [
+#         {
+#             "type": "function",
+#             "function": {
+#                 "name": "get_current_weather",
+#                 "description": "Get the current weather in a given location",
+#                 "parameters": {
+#                     "type": "object",
+#                     "properties": {
+#                         "location": {
+#                             "type": "string",
+#                             "description": "The city and state, e.g. San Francisco, CA",
+#                         },
+#                         "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+#                     },
+#                     "required": ["location"],
+#                 },
+#             },
+#         }
+#     ]
+#     response = client.chat.completions.create(
+#         model="gpt-3.5-turbo-1106",
+#         messages=messages,
+#         tools=tools,
+#         tool_choice="auto",  # auto is default, but we'll be explicit
+#     )
+#     response_message = response.choices[0].message
+#     tool_calls = response_message.tool_calls
+#     # Step 2: check if the model wanted to call a function
+#     if tool_calls:
+#         # Step 3: call the function
+#         # Note: the JSON response may not always be valid; be sure to handle errors
+#         available_functions = {
+#             "get_current_weather": get_current_weather,
+#         }  # only one function in this example, but you can have multiple
+#         messages.append(response_message)  # extend conversation with assistant's reply
+#         # Step 4: send the info for each function call and function response to the model
+#         for tool_call in tool_calls:
+#             function_name = tool_call.function.name
+#             function_to_call = available_functions[function_name]
+#             function_args = json.loads(tool_call.function.arguments)
+#             function_response = function_to_call(
+#                 location=function_args.get("location"),
+#                 unit=function_args.get("unit"),
+#             )
+#             messages.append(
+#                 {
+#                     "tool_call_id": tool_call.id,
+#                     "role": "tool",
+#                     "name": function_name,
+#                     "content": function_response,
+#                 }
+#             )  # extend conversation with function response
+#         second_response = client.chat.completions.create(
+#             model="gpt-3.5-turbo-1106",
+#             messages=messages,
+#         )  # get a new response from the model where it can see the function response
+#         return second_response
+# print(run_conversation())
