@@ -106,6 +106,7 @@ def interact():
             chara_data_encoded = extract_metadata_with_exiftool(filepath)
             if chara_data_encoded:
                 instruction = parse_character_card(chara_data_encoded)
+                session['personality_instruction'] = instruction
                 # print('INSTRUCTION ON THE ROUTE_: ', instruction)
             else:
                 return jsonify({'error': 'Failed to process character card.'}), 400
@@ -141,6 +142,8 @@ def interact():
     if not user_input:
         return jsonify({'error': 'Empty message.'}), 400
     # print('INSTRUCTION ON THE ROUTE~!!', instruction)
+
+    instruction = session.get('personality_instruction', None)
     user_input = str(user_input)
 
     # print('INSTRUCTION ON THE ROUTE', instruction)
