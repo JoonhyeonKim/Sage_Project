@@ -81,8 +81,34 @@
             <input type="submit" value="View Past Conversations">
         </form>
     </div>
+    <!-- Toggle Switch for Conscious Mode -->
+    <label class="switch">
+        <input type="checkbox" id="consciousModeToggle" value="Conscious Mode">
+        <span class="slider round"></span>
+    </label>
+    <div id="consciousModeStatus">Conscious Mode</div>
+  
     
 </body>
 <script src="{{ url_for('static', filename='js/dark-mode-toggle.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat-functions.js') }}"></script>
+<script>
+    document.getElementById('consciousModeToggle').addEventListener('change', function() {
+  var isChecked = this.checked;
+  fetch('/api/conscious_mode', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ enabled: isChecked }),
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Conscious Mode:', data.enabled ? 'Enabled' : 'Disabled');
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+});
+</script>
 </html>

@@ -72,6 +72,13 @@ def view_conversation(conversation_id):
     conversation = Conversation.query.get_or_404(conversation_id)
     return render_template('view_conversation.html', conversation=conversation)
 
+@main.route('/api/conscious_mode', methods=['POST'])
+def toggle_conscious_mode():
+    data = request.get_json()
+    conscious_mode_enabled = data.get('enabled', False)
+    session['conscious_mode'] = conscious_mode_enabled
+    return jsonify({'enabled': conscious_mode_enabled})
+
 @main.route('/test_safe')
 def test_safe():
     test_html = "<p>This should be <strong>bold</strong>.</p>"
@@ -92,6 +99,8 @@ def home():
 
 @main.route('/interact', methods=['POST'])
 def interact():
+    # Check if Conscious Mode is enabled
+    conscious_mode_enabled = session.get('conscious_mode', False)
     instruction = parse_character_card()
     user_input = None
 
@@ -134,9 +143,14 @@ def interact():
     instruction = session.get('personality_instruction', parse_character_card())
     user_input = str(user_input)
 
-    most_similar_prompt = get_most_similar_prompt(user_input, expert_prompts)
-    # Extract the content from the most similar prompt
-    most_similar_prompt_content = most_similar_prompt["content"]
+    if conscious_mode_enabled:
+        prompts_file_path = './data/prompt/conscious.json'
+        cs_prompts = load_prompts(prompts_file_path)
+        most_similar_prompt_content = f'This is the rule you have to follow: {cs_prompts}'
+    else:
+        most_similar_prompt = get_most_similar_prompt(user_input, expert_prompts)
+        # Extract the content from the most similar prompt
+        most_similar_prompt_content = most_similar_prompt["content"]
 
     # Retrieve or create a conversation
     conversation_id = session.get('conversation_id')

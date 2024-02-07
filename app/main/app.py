@@ -89,6 +89,7 @@ def is_informal(user_input):
     # Make the API call to classify the input
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
+        # model="gpt-4",
         messages=messages,
         temperature=0.5,  # Adjust as needed
         max_tokens=60,  # Adjust as needed
@@ -232,7 +233,7 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content, instr
     # Define the system message
     system_message = {
         "role": "system",
-        "content": f"{instruction} {most_similar_prompt_content}{system_postfix}{formatted_history}"
+        "content": f"{instruction} {most_similar_prompt_content} {system_postfix}{formatted_history}"
     }
 
     # Include the system message at the beginning of the chat history
