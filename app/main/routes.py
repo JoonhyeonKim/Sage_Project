@@ -119,19 +119,7 @@ def interact():
             user_input = data.get('user_input', '').strip()
         else:
             return jsonify({'error': 'No character card or JSON data provided.'}), 400
-    # # Check for file upload in the request
-    # if 'character_card' in request.files:
-    #     file = request.files['character_card']
-    #     if file.filename != '' and allowed_file(file.filename):
-    #         filename = secure_filename(file.filename)
-    #         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-    #         file.save(filepath)
-    #         # Assume extract_metadata_with_exiftool returns instructions or modifies global state
-    #         instruction = extract_metadata_with_exiftool(filepath)
-    #     else:
-    #         return jsonify({'error': 'Invalid file type or empty filename.'}), 400
 
-    # Process text message if present
     # print('INSTRUCTION ON THE ROUTE~', instruction)
     if request.content_type == 'application/json':
         data = request.get_json()
@@ -143,52 +131,8 @@ def interact():
         return jsonify({'error': 'Empty message.'}), 400
     # print('INSTRUCTION ON THE ROUTE~!!', instruction)
 
-    instruction = session.get('personality_instruction', None)
+    instruction = session.get('personality_instruction', parse_character_card())
     user_input = str(user_input)
-
-    # print('INSTRUCTION ON THE ROUTE', instruction)
-    # data = request.get_json()  # Get JSON data
-    # user_input = data.get('user_input', '').strip() if data else ''
-    # # user_input = request.form.get('user_input', '').strip()
-
-    # # Check if user_input is empty and handle it
-    # if not user_input:
-    #     # Option 1: Redirect back to home with a message (requires handling messages in your template)
-    #     # flash('Please enter a message before submitting.')
-    #     # return redirect(url_for('home'))
-        
-    #     # Option 2: Ignore the request and just redirect back to home
-    #     return jsonify({'error': 'Empty message'}), 400
-    
-    # user_input = str(user_input)
-
-    # # Initial instruction in case no character card is provided or parsing fails
-    # instruction = parse_character_card()
-
-    # # Handle file upload
-    # if 'character_card' in request.files:
-    #     file = request.files['character_card']
-    #     if file and allowed_file(file.filename):
-    #         filename = secure_filename(file.filename)
-    #         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-    #         file.save(filepath)
-            
-    #         # Process the character card
-    #         chara_data_encoded = extract_metadata_with_exiftool(filepath)
-    #         if chara_data_encoded:
-    #             instruction = parse_character_card(chara_data_encoded)
-    #         else:
-    #             return jsonify({'error': 'Failed to process character card.'}), 400
-    #     else:
-    #         return jsonify({'error': 'Invalid file type.'}), 400
-    # else:
-    #     # If no file is uploaded, check if request is JSON and process accordingly
-    #     if request.is_json:
-    #         data = request.get_json()
-    #         user_input = data.get('user_input', '').strip()
-    #     else:
-    #         return jsonify({'error': 'No character card or JSON data provided.'}), 400
-
 
     most_similar_prompt = get_most_similar_prompt(user_input, expert_prompts)
     # Extract the content from the most similar prompt
@@ -216,9 +160,6 @@ def interact():
 
     print("AI Response:", ai_response)  # Check the response format
     ai_response = format_ai_response(ai_response)  # Format for display
-
-    # ai_response = markdown(ai_response)
-    # safe_html_response = Markup(html_response)
 
     # Save the user input and AI response
     save_message(user_input, conversation_id, is_user=True)

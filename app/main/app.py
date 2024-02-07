@@ -252,19 +252,15 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content, instr
     ai_response = response.choices[0].message.content.strip()
     return ai_response
 
-# def format_ai_response(response):
-#     # Regular expression to find code blocks
-#     code_block_pattern = r"```python(.*?)```"
-#     # Replace code blocks with HTML pre and code tags
-#     formatted_response = re.sub(code_block_pattern, r"<pre><code>\1</code></pre>", response, flags=re.DOTALL)
-#     return formatted_response
 def format_ai_response(response):
     # Replace newline characters with HTML line breaks for better readability
-    formatted_response = response.replace("\n", "<br>")
+    # formatted_response = response.replace("\n", "<br>")
 
     # Additional formatting can be added here if needed
-
+    formatted_response = markdown(response)
+    print(formatted_response)
     return formatted_response
+
 # In production, this could be your backend API or an external API
 def get_current_weather(location, unit="fahrenheit"):
     """Get the current weather in a given location"""

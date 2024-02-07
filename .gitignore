@@ -8,3 +8,7 @@ instance/
 data/
 logs/  # If you have logging files you want to ignore
 migrations/  # If you're using Flask-Migrate or Alembic for database migrations
+test.ipynb
+test.py
+test_2.py
+
