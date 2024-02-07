@@ -159,7 +159,7 @@ def interact():
     ai_response = get_ai_response(summarized_history, user_input, most_similar_prompt_content, instruction)
 
     print("AI Response:", ai_response)  # Check the response format
-    ai_response = format_ai_response(ai_response)  # Format for display
+    # ai_response = format_ai_response(ai_response)  # Format for display
 
     # Save the user input and AI response
     save_message(user_input, conversation_id, is_user=True)

@@ -58,14 +58,25 @@ h1 {
     margin-top: 20px; /* Margin on top for spacing */
 }
 pre, code {
-    background-color: #3f91a0;
-    color: #ffffff;
-    border: 1px solid #ddd;
-    padding: 5px;
-    font-family: monospace;
-}
-pre {
+    background-color: #282c34; /* Dark but soft background color */
+    line-height: 1.5; /* Ensures enough space between lines of code */
+    white-space: pre-wrap; /* Ensures code wraps and does not overflow */
+    color: #abb2bf; /* Light grey text color for better readability */
+    border: none; /* Removing the border for a cleaner look */
+    padding: 1px; /* Adjust padding as needed */
+    font-family: 'Fira Code', monospace; /* Using a monospaced font for code */
+    font-size: 0.85rem; /* Adjusting font size to make it more appropriate */
+    border-radius: 4px; /* Optional: Adding a slight border-radius for modern rounded corners */
+    box-sizing: border-box;
     overflow-x: auto;
+}
+
+pre {
+    overflow-x: auto; /* Ensuring long code lines are scrollable */
+    margin-top: 20px;
+    margin-bottom: 20px;
+    /* line-height: 4; Adjusting line height for better readability */
+    white-space: pre-wrap; /* Ensuring the text wraps and respects whitespace */
 }
 input[type="text"] {
     width: calc(100% - 140px);
