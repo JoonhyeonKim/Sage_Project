@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Work Mode Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">  
+    <div class="max-w-4xl mx-auto py-10">
+        <div class="text-right my-4">
+            <a href="/" class="text-blue-500 hover:text-blue-700 font-bold">Back to Main Page</a>
+        </div>
+        <div class="mb-6">
+            <label for="userTextInput" class="block text-gray-700 text-sm font-bold mb-2">Your Query:</label>
+            <textarea id="userTextInput" class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter your query or request here..."></textarea>
+        </div>
+        <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2">Or Upload a File:</label>
+            <input type="file" id="userFileInput" class="shadow border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        <button id="submitQuery" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
+
+        <div id="aiResponse" class="mt-6">
+            <div id="aiTextOutput" class="bg-white shadow mt-6 p-4 rounded"></div>
+            <a id="aiFileOutput" href="#" class="hidden mt-4 inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Download File</a>
+        </div>
+    </div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- <script>
+$(document).ready(function() {
+    $('#submitQuery').click(function(e) {
+        e.preventDefault();
+
+        var userTextInput = $('#userTextInput').val();
+        var userFileInput = $('#userFileInput').get(0).files[0];
+        
+        var formData = new FormData();
+        formData.append('user_input', userTextInput);
+        if (userFileInput) {
+            formData.append('file', userFileInput);
+        }
+
+        $.ajax({
+            url: '/work_mode',
+            type: 'POST',
+            data: formData,
+            contentType: false, // Required for 'multipart/form-data' with file upload.
+            processData: false, // Required for 'multipart/form-data' with file upload.
+            success: function(response) {
+                if (response.success) {
+                    $('#aiTextOutput').text(response.message || "Document generated successfully.");
+                    if (response.document_link) {
+                        $('#aiFileOutput').attr('href', response.document_link).removeClass('hidden');
+                    }
+                } else {
+                    $('#aiTextOutput').text("Error: " + response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#aiTextOutput').text("An error occurred: " + error);
+            }
+        });
+    });
+});
+</script> -->
+<script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#submitQuery').click(function(e) {
+            e.preventDefault();
+    
+            // Retrieve the user's text input
+            var userTextInput = $('#userTextInput').val();
+    
+            // Send an AJAX request with the user's input
+            $.ajax({
+                url: '/work_mode',
+                type: 'POST',
+                contentType: 'application/json', // Specify the content type
+                data: JSON.stringify({ user_input: userTextInput }), // Convert the data to JSON
+                success: function(response) {
+                    // Update the UI with the AI response
+                    $('#aiTextOutput').text((response.ai_response) || "No response from AI.");
+                    $('#aiFileOutput').addClass('hidden'); // Hide file download link
+                },
+                error: function(xhr, status, error) {
+                    $('#aiTextOutput').text("An error occurred: " + error);
+                }
+            });
+        });
+    });
+    </script>    
+</html>

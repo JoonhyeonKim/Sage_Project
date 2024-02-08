@@ -1,0 +1,74 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #edf2f7;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    background-color: #ffffff;
+    padding: 20px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.input-section textarea {
+    width: 100%;
+    height: 150px; /* Increased height */
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px; /* Larger font size */
+    box-sizing: border-box; /* Added */
+}
+
+.input-section input[type="file"] {
+    margin-bottom: 15px;
+}
+
+.input-section button {
+    padding: 10px 25px;
+    background-color: #4a76a8;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.input-section button:hover {
+    background-color: #3a5a78;
+}
+
+.output-section {
+    margin-top: 20px;
+}
+
+#aiTextOutput {
+    padding: 12px;
+    background-color: #f7f7f7;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    min-height: 100px;
+    color: #333;
+    font-size: 16px;
+}
+
+#aiFileOutputContainer {
+    margin-top: 10px;
+}
+
+#aiFileOutput {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+#aiFileOutput:hover {
+    background-color: #218838;
+}

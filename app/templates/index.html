@@ -82,33 +82,97 @@
         </form>
     </div>
     <!-- Toggle Switch for Conscious Mode -->
-    <label class="switch">
+    <!-- <label class="switch"> -->
+    
+    <div class="mode-toggle">
+        <label>Conscious Mode: </label>
         <input type="checkbox" id="consciousModeToggle" value="Conscious Mode">
-        <span class="slider round"></span>
-    </label>
-    <div id="consciousModeStatus">Conscious Mode</div>
-  
+    </div>
+    
+    <div class="mode-toggle">
+        <label>Work Mode:</label>
+        <a href="/work_mode" id="workModeLink">Enter Work Mode</a>
+    </div>
     
 </body>
 <script src="{{ url_for('static', filename='js/dark-mode-toggle.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat-functions.js') }}"></script>
-<script>
+<!-- <script>
     document.getElementById('consciousModeToggle').addEventListener('change', function() {
-  var isChecked = this.checked;
-  fetch('/api/conscious_mode', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ enabled: isChecked }),
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Conscious Mode:', data.enabled ? 'Enabled' : 'Disabled');
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-  });
+    var isChecked = this.checked;
+    // Disable Work Mode toggle when Conscious Mode is enabled
+    $('#work-mode-toggle').prop('disabled', isChecked);
+
+    fetch('/api/conscious_mode', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ enabled: isChecked }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Conscious Mode:', data.enabled ? 'Enabled' : 'Disabled');
+        // Update Work Mode toggle based on Conscious Mode state
+        if(data.enabled) {
+            $('#work-mode-toggle').prop('checked', false);
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 });
-</script>
+
+$(document).ready(function() {
+    $('#work-mode-toggle').change(function() {
+        const workModeEnabled = $(this).is(':checked');
+        // Disable Conscious Mode toggle and Character Card upload if Work Mode is enabled
+        $('#consciousModeToggle, #character_card').prop('disabled', workModeEnabled);
+
+        $.ajax({
+            type: "POST",
+            url: "/api/work_mode",
+            contentType: "application/json",
+            data: JSON.stringify({ enabled: workModeEnabled }),
+            success: function(response) {
+                console.log("Work Mode:", response.enabled ? 'Enabled' : 'Disabled');
+                // Update Conscious Mode toggle based on Work Mode state
+                if(response.enabled) {
+                    $('#consciousModeToggle').prop('checked', false);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error toggling Work Mode:", error);
+            }
+        });
+    });
+});
+    </script> -->
+
+    <script>
+        document.getElementById('consciousModeToggle').addEventListener('change', function() {
+            var isChecked = this.checked;
+            // Potentially disable or alert about Work Mode when Conscious Mode is enabled
+            if (isChecked) {
+                // Optionally, alert the user or take any action before redirecting to Work Mode
+                // For example, display a message or disable a link
+                alert('Conscious Mode is enabled. Work Mode will be unavailable.');
+            }
+        });
+        
+        $(document).ready(function() {
+            // Assuming you want some interaction before going to Work Mode page
+            $('#workModeLink').on('click', function(e) {
+                // Check if Conscious Mode is enabled before redirecting
+                var consciousModeEnabled = $('#consciousModeToggle').is(':checked');
+                if (consciousModeEnabled) {
+                    e.preventDefault(); // Prevent the link from being followed
+                    alert('Please disable Conscious Mode before entering Work Mode.');
+                } else {
+                    // Optionally, perform any checks or set any states before redirecting
+                    window.location.href = $(this).attr('href'); // Follow the link to Work Mode page
+                }
+            });
+        });
+        </script>
 </html>
