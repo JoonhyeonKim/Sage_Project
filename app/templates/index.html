@@ -1,22 +1,17 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="UTF-8">
+        <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
         <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <!-- <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>     -->
-        <div class="relative-container">
-            <div id="toggle-container">
-                <button id="dark-mode-toggle">Toggle Dark Mode</button>
-            </div>
-        </div>
-             
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>             
         <title>AI Application</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     </head>    
-<body>
+<body class="{{ 'dark-mode' if session.get('dark_mode', False) else '' }}">
+    <button id="dark-mode-toggle" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">Toggle Dark Mode</button>
+
     <h1>Welcome to My AI Application</h1>        
     <!-- Display User Input and AI Response -->
     {% if user_input %}
@@ -52,11 +47,14 @@
     {% endif %} 
 
 
-    <!-- Loading Indicator -->
+    <!-- Loading Indicator
     <div id="loading" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 1);">
         Loading...
+    </div> -->
+    <div id="loading" style="display: none;">
+        <div class="loader"></div>
     </div>
-
+    
 
     <form id="chat-form" action="/interact" method="post">
         <input type="text" name="user_input" placeholder="Type your message" id="user_input">
@@ -97,59 +95,7 @@
 </body>
 <script src="{{ url_for('static', filename='js/dark-mode-toggle.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat-functions.js') }}"></script>
-<!-- <script>
-    document.getElementById('consciousModeToggle').addEventListener('change', function() {
-    var isChecked = this.checked;
-    // Disable Work Mode toggle when Conscious Mode is enabled
-    $('#work-mode-toggle').prop('disabled', isChecked);
-
-    fetch('/api/conscious_mode', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ enabled: isChecked }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Conscious Mode:', data.enabled ? 'Enabled' : 'Disabled');
-        // Update Work Mode toggle based on Conscious Mode state
-        if(data.enabled) {
-            $('#work-mode-toggle').prop('checked', false);
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-});
-
-$(document).ready(function() {
-    $('#work-mode-toggle').change(function() {
-        const workModeEnabled = $(this).is(':checked');
-        // Disable Conscious Mode toggle and Character Card upload if Work Mode is enabled
-        $('#consciousModeToggle, #character_card').prop('disabled', workModeEnabled);
-
-        $.ajax({
-            type: "POST",
-            url: "/api/work_mode",
-            contentType: "application/json",
-            data: JSON.stringify({ enabled: workModeEnabled }),
-            success: function(response) {
-                console.log("Work Mode:", response.enabled ? 'Enabled' : 'Disabled');
-                // Update Conscious Mode toggle based on Work Mode state
-                if(response.enabled) {
-                    $('#consciousModeToggle').prop('checked', false);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error("Error toggling Work Mode:", error);
-            }
-        });
-    });
-});
-    </script> -->
-
-    <script>
+<script>
         document.getElementById('consciousModeToggle').addEventListener('change', function() {
             var isChecked = this.checked;
             // Potentially disable or alert about Work Mode when Conscious Mode is enabled
@@ -174,5 +120,5 @@ $(document).ready(function() {
                 }
             });
         });
-        </script>
+</script>
 </html>

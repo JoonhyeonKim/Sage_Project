@@ -15,4 +15,4 @@ upload your character card by web interface
 
 you can take character card from chuub or risuai
 # Todo:
-  work mode implementation
+  Sub section of work mode that implements function calling

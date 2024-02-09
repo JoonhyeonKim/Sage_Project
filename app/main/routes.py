@@ -87,6 +87,12 @@ def toggle_conscious_mode():
     session['conscious_mode'] = conscious_mode_enabled
     return jsonify({'enabled': conscious_mode_enabled})
 
+@main.route('/toggle_dark_mode', methods=['POST'])
+def toggle_dark_mode():
+    # Toggle dark mode in the session
+    session['dark_mode'] = not session.get('dark_mode', False)
+    return jsonify({'dark_mode': session['dark_mode']})
+
 @main.route('/test_safe')
 def test_safe():
     test_html = "<p>This should be <strong>bold</strong>.</p>"
@@ -248,4 +254,5 @@ def work_mode():
         return jsonify({"ai_response": ai_response})
 
     # GET request: display the Work Mode page without processing input
-    return render_template('work_mode.html')
+    dark_mode_enabled = session.get('dark_mode', False)
+    return render_template('work_mode.html', dark_mode_enabled=dark_mode_enabled)

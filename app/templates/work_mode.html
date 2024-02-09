@@ -6,12 +6,13 @@
     <title>Enhanced Work Mode Interface</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100">  
+<body class="bg-gray-100 dark:bg-gray-800">  
     <div class="max-w-4xl mx-auto py-10">
         <div class="text-right my-4">
             <a href="/" class="text-blue-500 hover:text-blue-700 font-bold">Back to Main Page</a>
         </div>
         <div class="mb-6">
+            <b>Multi step reasoning: Self Discover</b>
             <label for="userTextInput" class="block text-gray-700 text-sm font-bold mb-2">Your Query:</label>
             <textarea id="userTextInput" class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter your query or request here..."></textarea>
         </div>
@@ -82,7 +83,7 @@ $(document).ready(function() {
                 data: JSON.stringify({ user_input: userTextInput }), // Convert the data to JSON
                 success: function(response) {
                     // Update the UI with the AI response
-                    $('#aiTextOutput').text((response.ai_response) || "No response from AI.");
+                    $('#aiTextOutput').html(marked(response.ai_response || "No response from AI.")).show();
                     $('#aiFileOutput').addClass('hidden'); // Hide file download link
                 },
                 error: function(xhr, status, error) {

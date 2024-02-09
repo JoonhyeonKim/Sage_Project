@@ -159,6 +159,7 @@ def get_chat_history(conversation_id):
     return chat_history
 
 def summarize_chat_history(chat_history):
+    MAX_TOKENS_FOR_SUMMARIZATION = 2000
     # Check if the chat history exceeds four interactions
     if len(chat_history) > 4:
         # Separate the chat history into parts to be summarized and preserved
@@ -170,6 +171,9 @@ def summarize_chat_history(chat_history):
         
         # Summarize the earlier part of the chat history
         summary = abstract_summary_extraction(transcription)
+
+        while len(summary) > MAX_TOKENS_FOR_SUMMARIZATION:
+            summary = abstract_summary_extraction(summary)
         
         # Reassemble the summarized part with the last four interactions
         new_chat_history = [{"role": "system", "content": "This is the summary of previous chat: " + summary}] + to_be_preserved
