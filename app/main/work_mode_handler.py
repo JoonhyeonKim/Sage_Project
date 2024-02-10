@@ -17,7 +17,7 @@ from flask_session import Session
 from redis import Redis
 from ..models.models import init_app, db, Conversation, Message
 
-from langchain.tools import DuckDuckGoSearchResults
+from langchain_community.tools import DuckDuckGoSearchResults
 from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 import json
 from tenacity import retry, wait_random_exponential, stop_after_attempt
