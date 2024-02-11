@@ -4,7 +4,6 @@ from werkzeug.utils import secure_filename
 from ..models.models import db, Conversation, Message
 from .app import (
     load_prompts,
-    get_current_weather,
     is_informal,
     get_embedding,
     get_most_similar_prompt,
@@ -19,9 +18,8 @@ from .app import (
     parse_character_card,
     extract_metadata_with_exiftool,
 )
-from .work_mode_handler import process_user_query_with_ai, generate_document
+from .work_mode_handler import process_user_query_with_ai, generate_document, use_functions
 import os
-
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -195,64 +193,46 @@ def interact():
 
     return jsonify({'ai_response': ai_response})
 
-# @main.route('/work_mode', methods=['GET', 'POST'])
-# def work_mode():
-#     session['conscious_mode'] = False  # Disable conscious mode when entering work mode.
-
-#     # if request.method == 'POST':
-#     #     if request.is_json:
-#     #         # Handle AJAX JSON request.
-#     #         data = request.get_json()
-#     #         user_input = data.get('user_input')
-#     #         document_type = data.get('document_type', 'Word')  # Default to Word if not specified.
-#     #         # Process the request...
-#     #         try:
-#     #             document_link = generate_document(user_input, document_type)
-#     #             return jsonify({"success": True, "document_link": document_link})
-#     #         except Exception as e:
-#     #             return jsonify({"success": False, "error": str(e)}), 500
-#     #     else:
-#     #         # Handle form submission as before.
-#     #         user_input = request.form.get('user_input')
-#     #         document_type = request.form.get('document_type', 'Word')
-#     #         try:
-#     #             document_link = generate_document(user_input, document_type)
-#     #             flash('Document generated successfully. You can download it from the link below.')
-#     #             return render_template('work_mode.html', document_link=document_link)
-#     #         except Exception as e:
-#     #             flash('An error occurred while generating the document: ' + str(e))
-#     #             return render_template('work_mode.html', error=str(e))
-
-#     # # GET request: just display the Work Mode page without any POST logic.
-#     # return render_template('work_mode.html')
-
-#     if request.method == 'POST':
-#         user_input = request.form.get('user_input', '')  # Assuming text input for simplicity
-#         # Call the function from your work mode factory
-#         ai_response = process_user_query_with_ai(user_input)
-
-#         # Provide feedback to the user
-#         flash('AI processed your request. Check the result below.')
-#         return jsonify({"ai_response": ai_response})
-
-#     # GET request handling: display the Work Mode page
-#     return render_template('work_mode.html')
 @main.route('/work_mode', methods=['GET', 'POST'])
 def work_mode():
     # Ensure entering work mode disables conscious mode
     session['conscious_mode'] = False
 
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "ddg_search",
+                "description": "Get the info from the web search engine DuckDuckGo",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "q": {
+                            "type": "string",
+                            "description": "Search query",
+                        },
+                    },
+                    "required": ["q"],
+                },
+            },
+        }
+    ]
+
     if request.method == 'POST':
         # Assuming the AJAX call sends JSON data
         data = request.get_json() if request.is_json else None
-        user_input = data.get('user_input', '') if data else ''
+        if data:
+            user_input = data.get('user_input', '') if data else '' # is user_input present then et it else empty string
+            query_type = data.get('query_type', 'self_discover') # Default to 'self_discover'
 
-        # Process the user input with your AI function
-        ai_response = process_user_query_with_ai(user_input)
+            if query_type == 'self_discover':
+                ai_response = process_user_query_with_ai(user_input)
+            elif query_type == 'use_tool':
+                # tools = data.get('tools', {}) # Get the tools from the request
+                ai_response = use_functions(user_input, tools)
+            else:
+                ai_response = "Unknown query type."
 
-        # Return a JSON response with the AI's response
-        return jsonify({"ai_response": ai_response})
-
-    # GET request: display the Work Mode page without processing input
+            return jsonify({"ai_response": ai_response})
     dark_mode_enabled = session.get('dark_mode', False)
     return render_template('work_mode.html', dark_mode_enabled=dark_mode_enabled)

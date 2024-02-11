@@ -11,6 +11,11 @@
         <div class="text-right my-4">
             <a href="/" class="text-blue-500 hover:text-blue-700 font-bold">Back to Main Page</a>
         </div>
+
+        <!-- Example buttons for selecting query type -->
+        <button id="queryTypeSelfDiscover" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Self Discover</button>
+        <button id="queryTypeUseTool" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use Tool</button>        
+
         <div class="mb-6">
             <b>Multi step reasoning: Self Discover</b>
             <label for="userTextInput" class="block text-gray-700 text-sm font-bold mb-2">Your Query:</label>
@@ -29,45 +34,9 @@
     </div>
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<!-- <script>
-$(document).ready(function() {
-    $('#submitQuery').click(function(e) {
-        e.preventDefault();
 
-        var userTextInput = $('#userTextInput').val();
-        var userFileInput = $('#userFileInput').get(0).files[0];
-        
-        var formData = new FormData();
-        formData.append('user_input', userTextInput);
-        if (userFileInput) {
-            formData.append('file', userFileInput);
-        }
-
-        $.ajax({
-            url: '/work_mode',
-            type: 'POST',
-            data: formData,
-            contentType: false, // Required for 'multipart/form-data' with file upload.
-            processData: false, // Required for 'multipart/form-data' with file upload.
-            success: function(response) {
-                if (response.success) {
-                    $('#aiTextOutput').text(response.message || "Document generated successfully.");
-                    if (response.document_link) {
-                        $('#aiFileOutput').attr('href', response.document_link).removeClass('hidden');
-                    }
-                } else {
-                    $('#aiTextOutput').text("Error: " + response.error);
-                }
-            },
-            error: function(xhr, status, error) {
-                $('#aiTextOutput').text("An error occurred: " + error);
-            }
-        });
-    });
-});
-</script> -->
 <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
-<script>
+<!-- <script>
     $(document).ready(function() {
         $('#submitQuery').click(function(e) {
             e.preventDefault();
@@ -92,5 +61,43 @@ $(document).ready(function() {
             });
         });
     });
-    </script>    
+    </script>     -->
+    <script>
+        $(document).ready(function() {
+            let queryType = 'self_discover'; // Default query type
+    
+            $('.query-type-btn').click(function(e) {
+                // Set the query type based on button clicked
+                queryType = this.id === 'queryTypeSelfDiscover' ? 'self_discover' : 'use_tool';
+            });
+    
+            $('#submitQuery').click(function(e) {
+                e.preventDefault();
+        
+                var userTextInput = $('#userTextInput').val();
+                var tools = queryType === 'use_tool' ? ['ddg_search'] : [];  // Example for tool usage
+                
+                // Include the query type and tools in the request
+                var requestData = {
+                    user_input: userTextInput,
+                    query_type: queryType,
+                    tools: tools
+                };
+    
+                $.ajax({
+                    url: '/work_mode',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function(response) {
+                        $('#aiTextOutput').html(marked(response.ai_response || "No response from AI.")).show();
+                        $('#aiFileOutput').addClass('hidden');
+                    },
+                    error: function(xhr, status, error) {
+                        $('#aiTextOutput').text("An error occurred: " + error);
+                    }
+                });
+            });
+        });
+    </script>
 </html>

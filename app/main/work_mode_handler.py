@@ -23,6 +23,8 @@ import json
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from termcolor import colored  
 
+from langchain_community.document_loaders import ArxivLoader
+
 GPT_MODEL = "gpt-3.5-turbo-0613"
 client = OpenAI()
 
@@ -205,7 +207,7 @@ def ddg_search(q):
     return answer
 
 
-def use_duckduckgo(user_input, tools):
+def use_functions(user_input, tools): # maybe I should define tools at route??
     messages = [{"role": "system", "content": "turn the following user input into a search query for a search engine and then use the function with that query to get result: "},
  {"role": "user", "content": user_input}]
 
@@ -243,4 +245,6 @@ def use_duckduckgo(user_input, tools):
                 messages=messages,
             )  
         res = second_response.choices[0].message.content.strip()
+        print('response message: ', response_message)
+        print('second response: ', second_response)
     return res    
