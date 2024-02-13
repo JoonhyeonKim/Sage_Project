@@ -11,7 +11,7 @@ set your openai key and your flask secret key to the .env
 
 put your experts prompts in the data/prompt which is in form
 ```
-{"id": number, "content": "Your Promt"}
+{"id": number, "content": "Your Prompt"}
 ```
 upload your character card by web interface
 
