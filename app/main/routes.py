@@ -19,6 +19,7 @@ from .app import (
     extract_metadata_with_exiftool,
 )
 from .work_mode_handler import process_user_query_with_ai, generate_document, use_functions
+from .wiki import execute_wiki_agent
 import os
 
 def allowed_file(filename):
@@ -230,6 +231,8 @@ def work_mode():
             elif query_type == 'use_tool':
                 # tools = data.get('tools', {}) # Get the tools from the request
                 ai_response = use_functions(user_input, tools)
+            elif query_type == 'use_wiki':
+                ai_response = execute_wiki_agent(user_input)
             else:
                 ai_response = "Unknown query type."
 

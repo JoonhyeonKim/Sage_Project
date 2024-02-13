@@ -23,7 +23,7 @@ import json
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from termcolor import colored  
 
-from langchain_community.document_loaders import ArxivLoader
+# from langchain_community.document_loaders import ArxivLoader
 
 GPT_MODEL = "gpt-3.5-turbo-0613"
 client = OpenAI()
@@ -248,3 +248,4 @@ def use_functions(user_input, tools): # maybe I should define tools at route??
         print('response message: ', response_message)
         print('second response: ', second_response)
     return res    
+

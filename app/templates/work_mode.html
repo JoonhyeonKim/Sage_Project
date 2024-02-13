@@ -11,13 +11,19 @@
         <div class="text-right my-4">
             <a href="/" class="text-blue-500 hover:text-blue-700 font-bold">Back to Main Page</a>
         </div>
+        <div class="background">
+            <div class="flower" style="top: 10%; left: 30%;"></div>
+            <div class="flower" style="top: 50%; left: 60%;"></div>
+            <div class="flower" style="top: 80%; left: 20%;"></div>
+            <!-- Add more flowers as desired -->
+        </div>
 
         <!-- Example buttons for selecting query type -->
         <button id="queryTypeSelfDiscover" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Self Discover</button>
-        <button id="queryTypeUseTool" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use Tool</button>        
+        <button id="queryTypeUseTool" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use Duckduckgo</button> 
+        <button id="queryTypeUseWikipedia" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use Wiki</button>        
 
         <div class="mb-6">
-            <b>Multi step reasoning: Self Discover</b>
             <label for="userTextInput" class="block text-gray-700 text-sm font-bold mb-2">Your Query:</label>
             <textarea id="userTextInput" class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter your query or request here..."></textarea>
         </div>
@@ -36,46 +42,34 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
-<!-- <script>
-    $(document).ready(function() {
-        $('#submitQuery').click(function(e) {
-            e.preventDefault();
-    
-            // Retrieve the user's text input
-            var userTextInput = $('#userTextInput').val();
-    
-            // Send an AJAX request with the user's input
-            $.ajax({
-                url: '/work_mode',
-                type: 'POST',
-                contentType: 'application/json', // Specify the content type
-                data: JSON.stringify({ user_input: userTextInput }), // Convert the data to JSON
-                success: function(response) {
-                    // Update the UI with the AI response
-                    $('#aiTextOutput').html(marked(response.ai_response || "No response from AI.")).show();
-                    $('#aiFileOutput').addClass('hidden'); // Hide file download link
-                },
-                error: function(xhr, status, error) {
-                    $('#aiTextOutput').text("An error occurred: " + error);
-                }
-            });
-        });
-    });
-    </script>     -->
-    <script>
+<script>
         $(document).ready(function() {
             let queryType = 'self_discover'; // Default query type
+            let tools = []; // Initialize an empty tools array
     
+            // $('.query-type-btn').click(function(e) {
+            //     // Set the query type based on button clicked
+            //     queryType = this.id === 'queryTypeSelfDiscover' ? 'self_discover' : 'use_tool';
+            // });
             $('.query-type-btn').click(function(e) {
                 // Set the query type based on button clicked
-                queryType = this.id === 'queryTypeSelfDiscover' ? 'self_discover' : 'use_tool';
+                if (this.id === 'queryTypeSelfDiscover') {
+                    queryType = 'self_discover';
+                    tools = []; // No tools needed for self discover
+                } else if (this.id === 'queryTypeUseTool') {
+                    queryType = 'use_tool';
+                    tools = ['ddg_search']; // Use DuckDuckGo for searching
+                } else if (this.id === 'queryTypeUseWikipedia') {
+                    queryType = 'use_wiki';
+                    tools = ['wikipedia_search']; // Specify the tool for Wikipedia search
+                }
             });
     
             $('#submitQuery').click(function(e) {
                 e.preventDefault();
         
                 var userTextInput = $('#userTextInput').val();
-                var tools = queryType === 'use_tool' ? ['ddg_search'] : [];  // Example for tool usage
+                // var tools = queryType === 'use_tool' ? ['ddg_search'] : [];  // Example for tool usage
                 
                 // Include the query type and tools in the request
                 var requestData = {
@@ -100,4 +94,5 @@
             });
         });
     </script>
+    
 </html>
