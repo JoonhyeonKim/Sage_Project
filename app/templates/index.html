@@ -47,15 +47,10 @@
     {% endif %} 
 
 
-    <!-- Loading Indicator
-    <div id="loading" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 1);">
-        Loading...
-    </div> -->
     <div id="loading" style="display: none;">
         <div class="loader"></div>
     </div>
     
-
     <form id="chat-form" action="/interact" method="post">
         <input type="text" name="user_input" placeholder="Type your message" id="user_input">
         <input type="button" value="Talk to AI" id="submit-btn">
@@ -121,4 +116,5 @@
             });
         });
 </script>
+
 </html>

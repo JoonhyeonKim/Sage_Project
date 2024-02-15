@@ -225,11 +225,6 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content, instr
     Returns:
     - str: The AI response.
     """
-
-    # image_path = '../../Downloads/2b56ced8073a1b83c5fc1e638db8bbd3699152cf0c70c582ac10430d35a21180.png'
-    # image_path = '../../Downloads/40aa5a2dca92a1af160c918e24f91d8ef2dea8d2f49479a635020c5518540f3a.png'
-    # chara_data_encoded = extract_metadata_with_exiftool(image_path)
-    # instruction = parse_character_card(chara_data_encoded)
     
     # Retrieve and format the chat history
     formatted_history = format_chat_history(chat_history)
@@ -249,7 +244,7 @@ def get_ai_response(chat_history, user_input, most_similar_prompt_content, instr
         messages=messages,
         # max_tokens=,
         frequency_penalty=0.5, # for less repeated words
-        temperature=1, # higher the more deterministic 
+        temperature=0.8, # higher the more deterministic 
         presence_penalty=0.5, # for less repeated topics
     )
 

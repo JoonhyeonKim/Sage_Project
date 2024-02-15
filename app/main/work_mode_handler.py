@@ -67,6 +67,32 @@ def query_llm(messages, max_tokens=2048, temperature=0.1):
             print("Failure querying the AI. Retrying...")
             time.sleep(1)
 
+def query_llm(messages, max_tokens=2048, temperature=0.1):
+    retry_count = 0  # Initialize a counter for the number of retries
+    max_retries = 10  # Set the maximum number of retries
+
+    while True:
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                n=1,
+            )
+
+            content = response.choices[0].message.content.strip()
+            return content
+        except Exception as e:
+            retry_count += 1  # Increment the retry counter
+            print(f"Failure querying the AI. Retrying... ({retry_count})")
+            time.sleep(1)
+
+            if retry_count >= max_retries:
+                # If the retry count exceeds the limit, return a custom error message
+                print("Exceeded maximum retry attempts. There might be an issue with the AI service.")
+                return "Sorry, we are currently experiencing technical difficulties and are unable to process your request. Please try again later."
+
 def query_openai(prompt):
     messages = [
         { "role": "user", "content": prompt }
@@ -151,12 +177,19 @@ def process_user_query_with_ai(user_input):
         "31. Does the problem require addressing systemic or structural issues rather than just individual instances?",
         "32. Is the problem time-sensitive or urgent, requiring immediate attention and action?",
         "33. What kinds of solution typically are produced for this kind of problem specification?",
-        "34. Given the problem specification and the current best solution, have a guess about other possible solutions."
-        "35. Let’s imagine the current best solution is totally wrong, what other ways are there to think about the problem specification?"
-        "36. What is the best way to modify this current best solution, given what you know about these kinds of problem specification?"
-        "37. Ignoring the current best solution, create an entirely new solution to the problem."
+        "34. Given the problem specification and the current best solution, have a guess about other possible solutions.",
+        "35. Let’s imagine the current best solution is totally wrong, what other ways are there to think about the problem specification?",
+        "36. What is the best way to modify this current best solution, given what you know about these kinds of problem specification?",
+        "37. Ignoring the current best solution, create an entirely new solution to the problem.",
         #"38. Let’s think step by step."
-        "39. Let’s make a step by step plan and implement it with good notation and explanation."
+        "39. Let’s make a step by step plan and implement it with good notation and explanation.",
+        "40. For any given problem, consider scenarios where key factors are different. 'If we hadn't implemented change X, what might have happened?' This helps identify the impact of specific actions and the importance of various elements.",
+        "41. To solve a problem in one domain, find an analogous problem in a different domain and examine how it was solved. For instance, look at how nature (e.g., how bees optimize flower visitation) solves efficiency problems to inspire solutions in logistics and distribution networks.",
+        "42. Temporarily remove some constraints or limitations of the problem to explore new solutions. For example, if budget constraints are limiting innovation, brainstorm solutions as if the budget were unlimited, then scale back ideas to fit actual constraints.",
+        "43. Develop multiple, detailed scenarios of how the future could unfold to anticipate challenges and opportunities. This method helps in preparing flexible long-term strategies.",
+        "44. Distinguish between solutions that require small, incremental changes and those that necessitate radical, transformative innovation. Tailor the problem-solving approach to the nature of the solution required.",
+        "45. Apply design thinking principles to empathize with users, define problems more accurately, ideate broadly, prototype rapidly, and test solutions iteratively, focusing on human-centered design.",
+        "46. Consider how the problem and potential solutions are viewed and addressed in different cultural or international contexts, which can reveal new insights and innovative approaches.",
     ]  # Define or load your reasoning modules
     selected_modules = select_reasoning_modules(user_input, reasoning_modules)
     adapted_modules = adapt_reasoning_modules(selected_modules, user_input)
@@ -248,4 +281,3 @@ def use_functions(user_input, tools): # maybe I should define tools at route??
         print('response message: ', response_message)
         print('second response: ', second_response)
     return res    
-
