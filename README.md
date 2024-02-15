@@ -15,6 +15,4 @@ put your experts prompts in the data/prompt which is in form
 ```
 upload your character card by web interface
 
-you can take character card from chub or risuai
-# Todo:
-  Sub section of work mode that implements function calling
+you can take character card from chub
