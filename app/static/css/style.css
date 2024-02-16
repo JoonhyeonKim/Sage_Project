@@ -5,6 +5,11 @@ body {
     box-sizing: border-box;
     background-color: #f0f2f5; /* Light grey background */
     color: #333; /* Dark grey text for readability */
+    background-image: url('/static/images/decorative-flowers-leaves-art-nouveau-600nw-2252257955.webp'); /* Adjust the path as necessary */
+    background-size: cover; /* Cover the entire page */
+    background-position: center; /* Center the background image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-attachment: fixed; /* Optional: Makes the background fixed during scroll */
 
 }
 h1 {
@@ -252,4 +257,24 @@ body.dark-mode #dark-mode-toggle {
     100% {
         transform: translate(-50%, -50%) rotate(360deg);
     }
+}
+
+/* Improved visibility class for text elements */
+.text-visibility-enhanced {
+    background-color: rgba(99, 53, 53, 0.6); /* Semi-transparent black background */
+    color: #FFFFFF; /* White text for contrast */
+    padding: 10px;
+    border-radius: 5px; /* Rounded corners for aesthetics */
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5); /* Text shadow for depth */
+    display: inline-block; /* Or 'block' depending on layout needs */
+    margin: 10px 0; /* Add some margin for spacing */
+}
+
+/* Specific styling for smaller elements or those needing less emphasis */
+.minor-text-visibility-enhanced {
+    background-color: rgba(134, 30, 30, 0.5); /* Lighter background */
+    padding: 5px 10px; /* Smaller padding */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    display: inline-block;
+    margin: 5px 0;
 }

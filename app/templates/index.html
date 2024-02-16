@@ -9,10 +9,10 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     </head>    
-<body class="{{ 'dark-mode' if session.get('dark_mode', False) else '' }}">
-    <button id="dark-mode-toggle" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">Toggle Dark Mode</button>
+<!-- <body class="{{ 'dark-mode' if session.get('dark_mode', False) else '' }}">
+    <button id="dark-mode-toggle" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">Toggle Dark Mode</button> -->
 
-    <h1>Welcome to My AI Application</h1>        
+    <h1 class="text-visibility-enhanced">Sage in a py</h1>        
     <!-- Display User Input and AI Response -->
     {% if user_input %}
     <div class="chat-container user-container">
@@ -43,7 +43,7 @@
         {% endfor %}
     </div>
     {% else %}
-        <p>No active session. Click 'Start New Session' to begin.</p>
+        <p class="text-visibility-enhanced minor-text-visibility-enhanced">No active session. Click 'Start New Session' to begin.</p>
     {% endif %} 
 
 
@@ -74,15 +74,13 @@
             <input type="submit" value="View Past Conversations">
         </form>
     </div>
-    <!-- Toggle Switch for Conscious Mode -->
-    <!-- <label class="switch"> -->
     
-    <div class="mode-toggle">
+    <div class="mode-toggle minor-text-visibility-enhanced text-visibility-enhanced">
         <label>Conscious Mode: </label>
         <input type="checkbox" id="consciousModeToggle" value="Conscious Mode">
     </div>
     
-    <div class="mode-toggle">
+    <div class="mode-toggle minor-text-visibility-enhanced text-visibility-enhanced">
         <label>Work Mode:</label>
         <a href="/work_mode" id="workModeLink">Enter Work Mode</a>
     </div>
