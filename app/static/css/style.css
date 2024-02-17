@@ -17,11 +17,7 @@ h1 {
     color: #007bff; /* Use primary color from your palette */
     margin-bottom: 1rem;
 }
-.chat-container {
-    display: flex;
-    align-items: center;
-    margin-top: 20px;
-}
+
 .profile-image {
     width: 50px; /* Adjust size as needed */
     height: 50px; /* Adjust size as needed */
@@ -226,6 +222,7 @@ body.dark-mode #dark-mode-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 2;
 }
 
 .loader {
@@ -277,4 +274,53 @@ body.dark-mode #dark-mode-toggle {
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
     display: inline-block;
     margin: 5px 0;
+}
+
+/* .chat-container { */
+    /* position: relative; */
+    /* background-color: rgba(255, 255, 255, 0.5); Semi-transparent white */
+    /* border: 1px solid #ddd; Your existing border */
+    /* padding: 10px; */
+    /* border-radius: 5px; Your existing border-radius */
+    /* margin-bottom: 20px; Adds space between conversation boxes */
+    /* overflow: hidden; Ensures pseudo-element does not overflow the container */
+/* } */
+
+.chat-container {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2); /* Adjust color and spread as needed */
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.76); /* Semi-transparent white */
+    border: 1px solid #ddd; /* Your existing border */
+    padding: 10px;
+    border-radius: 5px; /* Your existing border-radius */
+    margin-bottom: 20px; /* Adds space between conversation boxes */
+    overflow: hidden; /* Ensures pseudo-element does not overflow the container */
+}
+
+.chat-container::before {
+    content: ''; /* Required for pseudo-elements */
+    position: absolute;
+    top: -5px; left: -5px; /* Adjust these values to control the effect size */
+    right: -5px; bottom: -5px;
+    z-index: -1; /* Ensures the pseudo-element is behind the content */
+    background-color: rgba(255, 255, 255, 0.3); /* More transparent background */
+    border-radius: 15px; /* Match the border-radius of the chat-container if any */
+}
+.chat-container::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%; /* Makes the pseudo-element much larger than the container */
+    border-radius: 50%;
+    z-index: -1;
+    background: radial-gradient(circle, rgba(255,255,255,0) 40%, rgba(0,0,0,0.1) 70%);
+    /* Adjust the gradient to fit your design - this creates a soft shadow */
+}
+/* Ensure text and images inside the container are above the pseudo-element */
+.chat-container > *, .chat-container img {
+    position: relative;
+    z-index: 1;
 }

@@ -23,8 +23,8 @@
 
     {% if ai_response %}
     <div class="chat-container response">
+        <strong>AI:</strong> {{ ai_response | safe }}
         <img src="{{ url_for('static', filename='images/ai.jpg') }}" alt="AI Profile Photo" class="profile-image">
-        <div><strong>AI:</strong> {{ ai_response | safe }}</div>
     </div>
     {% endif %}
 
@@ -37,7 +37,7 @@
                 <img src="{{ url_for('static', filename='images/user.jpg') }}" alt="User Profile Photo" class="profile-image">
             {% else %}
                 <img src="{{ url_for('static', filename='images/ai.jpg') }}" alt="AI Profile Photo" class="profile-image">
-                <div><strong>AI:</strong> {{ message.content | safe }}</div>
+                <div class="chat-container response"><strong>AI:</strong> {{ message.content | safe }}</div>
             {% endif %}
         </div>
         {% endfor %}
