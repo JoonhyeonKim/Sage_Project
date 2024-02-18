@@ -20,6 +20,7 @@ from .app import (
 )
 from .work_mode_handler import process_user_query_with_ai, generate_document, use_functions
 from .wiki import execute_wiki_agent
+from .multi_functions import run_conversation
 import os
 
 def allowed_file(filename):
@@ -233,6 +234,8 @@ def work_mode():
                 ai_response = use_functions(user_input, tools)
             elif query_type == 'use_wiki':
                 ai_response = execute_wiki_agent(user_input)
+            elif query_type == 'auto_mode':
+                ai_response = run_conversation(user_input)
             else:
                 ai_response = "Unknown query type."
 

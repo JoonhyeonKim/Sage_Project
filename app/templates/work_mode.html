@@ -21,7 +21,8 @@
         <!-- Example buttons for selecting query type -->
         <button id="queryTypeSelfDiscover" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Self Discover</button>
         <button id="queryTypeUseTool" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use Duckduckgo</button> 
-        <button id="queryTypeUseWikipedia" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use Wiki</button>        
+        <button id="queryTypeUseWikipedia" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use Wiki</button>
+        <button id="queryTypeUseAutomode" class="query-type-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none m-2">Use AutoMode</button>        
 
         <div class="mb-6">
             <label for="userTextInput" class="block text-gray-700 text-sm font-bold mb-2">Your Query:</label>
@@ -62,6 +63,10 @@
                 } else if (this.id === 'queryTypeUseWikipedia') {
                     queryType = 'use_wiki';
                     tools = ['wikipedia_search']; // Specify the tool for Wikipedia search
+                }
+                else if (this.id === 'queryTypeUseAutomode') {
+                    queryType = 'auto_mode';
+                    tools = ['automatic_machine']; // Specify the tool for Wikipedia search
                 }
             });
     
