@@ -33,7 +33,11 @@
             <input type="file" id="userFileInput" class="shadow border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
         </div>
         <button id="submitQuery" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
-
+        
+        <div id="loading" style="display: none;">
+            <div class="loader"></div>
+        </div>
+        
         <div id="aiResponse" class="mt-6">
             <div id="aiTextOutput" class="bg-white shadow mt-6 p-4 rounded"></div>
             <a id="aiFileOutput" href="#" class="hidden mt-4 inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Download File</a>
@@ -72,6 +76,7 @@
     
             $('#submitQuery').click(function(e) {
                 e.preventDefault();
+                $('#loading').show();
         
                 var userTextInput = $('#userTextInput').val();
                 // var tools = queryType === 'use_tool' ? ['ddg_search'] : [];  // Example for tool usage
@@ -91,10 +96,12 @@
                     success: function(response) {
                         $('#aiTextOutput').html(marked(response.ai_response || "No response from AI.")).show();
                         $('#aiFileOutput').addClass('hidden');
+                        $('#loading').hide();
                     },
                     error: function(xhr, status, error) {
                         $('#aiTextOutput').text("An error occurred: " + error);
-                    }
+                        $('#loading').hide();
+                    },
                 });
             });
         });

@@ -86,7 +86,7 @@ def get_current_traffic(location):
 
 def run_conversation(user_input):
     # Step 1: send the conversation and available functions to the model
-    messages = [{"role": "system", "content": "You are a great decision maker. You always choose right tool for the task."} , {"role": "user", "content": user_input}]
+    messages = [{"role": "system", "content": "You are a great decision maker. You always choose the right tool for a given task."} , {"role": "user", "content": user_input}]
     tools = [
         {
             "type": "function",
@@ -127,7 +127,7 @@ def run_conversation(user_input):
             "type": "function",
             "function": {
                 "name": "ddg_search",
-                "description": "Get the information from web",
+                "description": "Fetch the information from web",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -144,7 +144,7 @@ def run_conversation(user_input):
             "type": "function",
             "function": {
                 "name": "execute_wiki_agent",
-                "description": "Get the information from wiki",
+                "description": "Retrieve the information from wiki",
                 "parameters": {
                     "type": "object",
                     "properties": {
